@@ -92,11 +92,7 @@ export default function ProjectCard({
 
   // Hype display
   const hype = project.hype_level ?? 0;
-  const hypeDisplay = hype >= 8
-    ? { icon: '🔥', color: '#fb923c' }
-    : hype >= 5
-    ? { icon: '⚡', color: '#fbbf24' }
-    : { icon: '',   color: '#64748b' };
+  const hypeColor = hype >= 8 ? '#22c55e' : hype >= 5 ? '#eab308' : '#64748b';
 
   // Age badges
   const ageMs   = Date.now() - new Date(project.first_spotted).getTime();
@@ -119,12 +115,13 @@ export default function ProjectCard({
       {/* Body */}
       <div className="flex flex-col gap-3 p-5 flex-1">
 
-        {/* Top row: ID + chain pill + type + hype score */}
+        {/* Top row: ID + chain pill + type (left) | hype score (right) */}
         <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-[10px] text-[#475569] tracking-wider shrink-0">
-            [ {idTag} ]
-          </span>
-          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {/* Left: ID tag + chain pill + type label */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-mono text-[10px] text-[#475569] tracking-wider shrink-0">
+              [ {idTag} ]
+            </span>
             {chainLabel && (
               <span
                 className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 rounded-sm border border-transparent"
@@ -136,15 +133,20 @@ export default function ProjectCard({
             {typeLabel && (
               <span className="font-mono text-[10px] text-[#94a3b8] tracking-wider">{typeLabel}</span>
             )}
-            {hype > 0 && (
-              <span
-                className="font-mono text-[11px] font-bold tracking-wide"
-                style={{ color: hypeDisplay.color }}
-              >
-                {hypeDisplay.icon}{hypeDisplay.icon ? ' ' : ''}{hype}
-              </span>
-            )}
           </div>
+
+          {/* Right: hype score */}
+          {hype > 0 && (
+            <div className="flex flex-col items-center shrink-0">
+              <span
+                className="font-mono text-[13px] font-bold tabular-nums leading-none"
+                style={{ color: hypeColor }}
+              >
+                {hype}/10
+              </span>
+              <span className="font-mono text-[8px] text-[#475569] tracking-widest mt-0.5">HYPE</span>
+            </div>
+          )}
         </div>
 
         {/* Project name */}
