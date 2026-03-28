@@ -201,7 +201,7 @@ export default function AlphaFeed() {
           <div className="flex flex-wrap gap-10">
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">{visibleCount}</div>
-              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">EARLY PROJECTS</div>
+              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">PROJECTS</div>
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">33</div>
