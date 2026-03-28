@@ -243,6 +243,31 @@ export default function ProjectModal({ project, onClose }: { project: Project; o
             </div>
           </div>
 
+          {/* Buzz */}
+          {(project.buzz_count ?? 0) > 0 ? (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <svg className="w-3.5 h-3.5 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              <span className="font-mono text-xs text-slate-300">
+                <span className={[
+                  'font-bold',
+                  project.buzz_count >= 50 ? 'text-emerald-400' :
+                  project.buzz_count >= 20 ? 'text-amber-400'   :
+                  project.buzz_count >=  5 ? 'text-slate-300'   : 'text-slate-500',
+                ].join(' ')}>
+                  {project.buzz_count}
+                </span>
+                <span className="text-slate-500"> mentions on X in last 48hrs</span>
+              </span>
+              {project.buzz_count < 5 && (
+                <span className="ml-auto font-mono text-[10px] text-slate-600 border border-slate-700/50 px-1.5 py-0.5 rounded">
+                  LOW BUZZ
+                </span>
+              )}
+            </div>
+          ) : null}
+
           {/* Summary */}
           <Section title="Summary">
             <p className="text-sm text-slate-300 leading-relaxed">{project.summary}</p>

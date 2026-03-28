@@ -21,6 +21,7 @@ export type Project = {
   contract_address: string;
   hype_level: number;
   is_shill: boolean;
+  buzz_count: number;
 };
 
 export type Hunter = {

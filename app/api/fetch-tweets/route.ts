@@ -68,8 +68,9 @@ function calculateScore(params: {
   tweetUrls: string[];
   engagementMap: Map<string, TweetEngagement>;
   firstSpotted: string;
+  buzzCount: number;
 }): number {
-  const { mentionCount, tweetUrls, engagementMap, firstSpotted } = params;
+  const { mentionCount, tweetUrls, engagementMap, firstSpotted, buzzCount } = params;
 
   let score = 50; // base
 
@@ -88,6 +89,11 @@ function calculateScore(params: {
   }
   score += Math.floor(totalLikes    / 100) * 5;
   score += Math.floor(totalRetweets / 50)  * 5;
+
+  // buzz bonus: broader Twitter chatter in last 48h
+  if      (buzzCount >= 50) score += 15;
+  else if (buzzCount >= 20) score += 10;
+  else if (buzzCount >=  5) score += 5;
 
   // staleness penalty: -10 if first_spotted > 48h ago
   const ageHours = (Date.now() - new Date(firstSpotted).getTime()) / 36e5;
@@ -184,6 +190,51 @@ async function fetchInBatches(
 }
 
 // ─────────────────────────────────────────────
+// Buzz verification: search Twitter for project name
+// ─────────────────────────────────────────────
+
+async function searchProjectBuzz(projectName: string): Promise<number> {
+  const query = encodeURIComponent(`"${projectName}"`);
+  const url   = `https://api.twitterapi.io/twitter/tweet/search?query=${query}&queryType=Latest&count=100`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'X-API-Key': process.env.TWITTER_API_KEY! },
+    });
+    if (!res.ok) return 0;
+
+    const data = await res.json();
+    const tweets: RawTweet[] = data.data?.tweets ?? data.tweets ?? [];
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+
+    return tweets.filter((t) => {
+      if (!t.createdAt) return true; // no date → include to avoid false negatives
+      const ts = new Date(t.createdAt).getTime();
+      return !isNaN(ts) && ts >= cutoff;
+    }).length;
+  } catch {
+    return 0;
+  }
+}
+
+async function fetchBuzzInBatches(
+  projectNames: string[],
+  batchSize = 5,
+  delayMs = 500
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  for (let i = 0; i < projectNames.length; i += batchSize) {
+    const batch = projectNames.slice(i, i + batchSize);
+    const counts = await Promise.all(batch.map((name) => searchProjectBuzz(name)));
+    batch.forEach((name, idx) => result.set(name, counts[idx]));
+    if (i + batchSize < projectNames.length) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────
 // Part 2: Claude system prompt with new fields
 // ─────────────────────────────────────────────
 
@@ -231,7 +282,8 @@ Return only a valid JSON array, no extra text, no markdown fences.`;
 
 async function upsertProject(
   project: AlphaProject,
-  engagementMap: Map<string, TweetEngagement>
+  engagementMap: Map<string, TweetEngagement>,
+  buzzCount: number
 ) {
   const nameLower = project.project_name.toLowerCase().trim();
 
@@ -252,7 +304,7 @@ async function upsertProject(
     // ── Merge arrays (dedup) ──
     const mergedLinks       = Array.from(new Set([...(existing.tweet_links ?? []),    ...project.tweet_urls]));
     const mergedMentionedBy = Array.from(new Set([...(existing.mentioned_by ?? []),   ...project.mentioned_by]));
-    const newMentionCount   = mergedMentionedBy.length; // count unique hunters, not raw increments
+    const newMentionCount   = mergedMentionedBy.length;
 
     // ── Keep earliest first_spotted ──
     const existingDate = new Date(existing.first_spotted ?? now);
@@ -264,6 +316,7 @@ async function upsertProject(
       tweetUrls:     mergedLinks,
       engagementMap,
       firstSpotted:  keepSpotted,
+      buzzCount,
     });
 
     const { error: updateErr } = await supabase
@@ -274,7 +327,7 @@ async function upsertProject(
         mentioned_by:     mergedMentionedBy,
         first_spotted:    keepSpotted,
         score:            newScore,
-        // Refresh enriched fields if Claude found better data
+        buzz_count:       buzzCount,
         project_twitter:  project.project_twitter  || existing.project_twitter  || '',
         project_website:  project.project_website  || existing.project_website  || '',
         contract_address: project.contract_address || existing.contract_address || '',
@@ -289,6 +342,7 @@ async function upsertProject(
       tweetUrls:     project.tweet_urls,
       engagementMap,
       firstSpotted:  now,
+      buzzCount,
     });
 
     const { error: insertErr } = await supabase.from('projects').insert({
@@ -301,6 +355,7 @@ async function upsertProject(
       tweet_links:      project.tweet_urls,
       mentioned_by:     project.mentioned_by,
       score:            initialScore,
+      buzz_count:       buzzCount,
       project_twitter:  project.project_twitter  ?? '',
       project_website:  project.project_website  ?? '',
       contract_address: project.contract_address ?? '',
@@ -405,9 +460,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 3: upsert projects sequentially to avoid race conditions on dedup
+    // Step 3: buzz verification — search Twitter for each extracted project
+    const buzzMap = await fetchBuzzInBatches(projects.map((p) => p.project_name));
+    console.log('Buzz counts:', Object.fromEntries(buzzMap));
+
+    // Step 4: upsert projects sequentially to avoid race conditions on dedup
     for (const project of projects) {
-      await upsertProject(project, engagementMap);
+      const buzzCount = buzzMap.get(project.project_name) ?? 0;
+      await upsertProject(project, engagementMap, buzzCount);
     }
 
     // Write scan timestamp so the UI can enforce a 2-hour cooldown
