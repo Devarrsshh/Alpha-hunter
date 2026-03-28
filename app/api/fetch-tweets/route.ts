@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 
 const HUNTERS = [
   'CrypSaf', 'Tma_420', '0itsali0', 'supraEVM', 'imho_nft',
-  'BR4ted', 'Airdropalertcom', 'CryptoTeluguO', 'mztacat', 'DeFiMinty',
+  'BR4ted', 'CryptoTeluguO', 'mztacat', 'DeFiMinty',
   'GuarEmperor', 'steveyun', '0xCygaar', 'functi0nZer0', '0xSisyphus',
   'cryptunez', 'g_dip', '0xkakashi', 'Defi0xJeff', 'SmolPoulet',
   '0x_Kun', 'alpha_pls', 'dingalingts', 'thedefiedge', '0xmughal',
@@ -257,6 +257,8 @@ SKIP unconditionally if ANY of the following are true:
 - It is a top 100 DeFi protocol (Uniswap, Aave, Compound, Curve, MakerDAO, Lido, EigenLayer, Pendle, Jupiter, Raydium, etc.)
 - It is a well-known CEX or its native token (Binance/BNB, Coinbase, OKX, Bybit, etc.)
 - General market commentary, price opinions, or news about already-established projects
+- It appears on this explicit blocklist — skip these regardless of context or who posts about them:
+  Balancer, Polymarket, Backpack, Uniswap, Aave, Compound, Chainlink, Arbitrum, Optimism, Base, Ethereum, Bitcoin, Solana, BNB, Polygon, Avalanche, Cardano, Dogecoin, Shiba Inu, Litecoin, XRP, Tron, Cosmos, Polkadot, Near, Fantom, Harmony, Celo, Algorand, VeChain, Stellar, EOS, Tezos, Monero, Dash, Zcash, Maker, Curve, Yearn, Synthetix, dYdX, GMX, Gains Network, Hyperliquid, Pendle, Eigenlayer, Blur, OpenSea, Magic Eden
 
 When in doubt about whether a project is early or established — include it, but set hype_level to 3 or lower.
 If nothing in the tweets qualifies, return an empty array [].
