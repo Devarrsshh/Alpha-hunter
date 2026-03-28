@@ -57,22 +57,22 @@ function formatRelative(iso: string) {
 
 function HypeBar({ level }: { level: number }) {
   const clamped = Math.min(10, Math.max(1, Math.round(level)));
-  const color = clamped >= 8 ? 'bg-emerald-400' : clamped >= 5 ? 'bg-amber-400' : 'bg-slate-500';
+  const barColor = clamped >= 8 ? '#22c55e' : clamped >= 5 ? '#eab308' : '#64748b';
+  const textColor = clamped >= 8 ? '#22c55e' : clamped >= 5 ? '#eab308' : '#64748b';
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex gap-1">
-        {Array.from({ length: 10 }, (_, i) => (
-          <div
-            key={i}
-            className={[
-              'h-2 rounded-sm transition-all duration-300',
-              i < clamped ? `${color} w-4` : 'bg-white/[0.06] w-4',
-            ].join(' ')}
-            style={i < clamped ? { transitionDelay: `${i * 30}ms` } : {}}
-          />
-        ))}
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-2xl font-bold font-mono leading-none tabular-nums" style={{ color: textColor }}>
+          {clamped}
+        </span>
+        <span className="text-sm font-mono text-slate-600">/10</span>
       </div>
-      <span className="text-xs font-mono text-slate-400 tabular-nums">{clamped}/10</span>
+      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${clamped * 10}%`, backgroundColor: barColor }}
+        />
+      </div>
     </div>
   );
 }
