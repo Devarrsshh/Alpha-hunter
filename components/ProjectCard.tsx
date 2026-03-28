@@ -168,7 +168,7 @@ export default function ProjectCard({
           <div className="flex flex-wrap gap-1.5">
             {project.mentioned_by.slice(0, 4).map((h) => (
               <span key={h} className="font-mono text-[10px] text-[#818cf8] tracking-wider">
-                @{h}
+                @{h.replace(/^@/, '')}
               </span>
             ))}
             {project.mentioned_by.length > 4 && (

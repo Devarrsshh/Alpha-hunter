@@ -346,12 +346,12 @@ export default function ProjectModal({ project, onClose }: { project: Project; o
                 {project.mentioned_by.map((handle) => (
                   <a
                     key={handle}
-                    href={`https://twitter.com/${handle}`}
+                    href={`https://twitter.com/${handle.replace(/^@/, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-[11px] font-mono text-indigo-400/80 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/20 hover:border-indigo-500/50 hover:text-indigo-300 transition-all duration-150"
                   >
-                    <span className="text-indigo-600">@</span>{handle}
+                    <span className="text-indigo-600">@</span>{handle.replace(/^@/, '')}
                   </a>
                 ))}
               </div>
