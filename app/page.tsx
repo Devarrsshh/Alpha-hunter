@@ -55,7 +55,7 @@ export default function LandingPage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-400" />
           </span>
-          Alpha Hunter
+          AlphaScan
         </div>
 
         {/* Headline */}
@@ -103,7 +103,7 @@ export default function LandingPage() {
 
       <footer className="absolute bottom-0 left-0 right-0 border-t border-white/[0.06] py-4 px-6">
         <p className="text-center text-[11px] text-slate-600 leading-relaxed max-w-2xl mx-auto">
-          Alpha Hunter is for informational purposes only. Nothing here is financial advice. Always do your own research (DYOR). We are not responsible for any financial decisions made based on this data.
+          AlphaScan is for informational purposes only. Nothing here is financial advice. Always do your own research (DYOR). We are not responsible for any financial decisions made based on this data.
         </p>
       </footer>
     </div>
