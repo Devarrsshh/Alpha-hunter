@@ -150,7 +150,7 @@ export default function AlphaFeed() {
 
             {/* Logo */}
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[#6366f1] font-mono text-sm font-bold">▲</span>
+              <img src="/logo.svg" alt="AlphaScan" width={36} height={36} />
               <span className="font-mono text-sm font-bold tracking-widest text-white">ALPHASCAN</span>
             </div>
 
