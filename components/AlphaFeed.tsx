@@ -320,11 +320,16 @@ export default function AlphaFeed() {
       )}
 
       <footer className="border-t border-[#1a1a1a] mt-16 py-6">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <span className="font-mono text-[10px] text-[#475569] tracking-widest">ALPHA_HUNTER v1.0</span>
-          <span className="font-mono text-[10px] text-[#475569] tracking-widest">
-            TWITTERAPI.IO · CLAUDE AI · SUPABASE
-          </span>
+        <div className="max-w-7xl mx-auto px-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-[#475569] tracking-widest">ALPHA_HUNTER v1.0</span>
+            <span className="font-mono text-[10px] text-[#475569] tracking-widest">
+              TWITTERAPI.IO · CLAUDE AI · SUPABASE
+            </span>
+          </div>
+          <p className="text-[11px] text-[#475569] leading-relaxed">
+            Alpha Hunter is for informational purposes only. Nothing here is financial advice. Always do your own research (DYOR). We are not responsible for any financial decisions made based on this data.
+          </p>
         </div>
       </footer>
     </div>

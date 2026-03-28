@@ -100,6 +100,12 @@ export default function LandingPage() {
 
 
       </div>
+
+      <footer className="absolute bottom-0 left-0 right-0 border-t border-white/[0.06] py-4 px-6">
+        <p className="text-center text-[11px] text-slate-600 leading-relaxed max-w-2xl mx-auto">
+          Alpha Hunter is for informational purposes only. Nothing here is financial advice. Always do your own research (DYOR). We are not responsible for any financial decisions made based on this data.
+        </p>
+      </footer>
     </div>
   );
 }
