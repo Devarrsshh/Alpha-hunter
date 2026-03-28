@@ -219,12 +219,6 @@ export default function AlphaFeed() {
               </div>
               <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">TOP HYPE</div>
             </div>
-            <div>
-              <div className="font-mono text-3xl font-bold text-white tabular-nums">
-                {lastScan ? formatRelative(lastScan) : 'Never'}
-              </div>
-              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">LAST SCAN</div>
-            </div>
           </div>
         </div>
       </div>
