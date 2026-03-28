@@ -245,7 +245,7 @@ export default function AlphaFeed() {
             ))}
           </div>
           <span className="font-mono text-xs text-[#94a3b8]">
-            {filtered.length}/{projects.length} RESULTS
+            {filtered.length}/{visibleCount} RESULTS
           </span>
         </div>
 
