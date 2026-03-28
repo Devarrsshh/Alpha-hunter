@@ -41,3 +41,23 @@ body {
 .card-enter     { animation: fade-in-up 0.35s ease both; }
 .card-glow      { animation: pulse-glow 3s ease-in-out infinite; }
 .animate-slide-in { animation: slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Landing page orb animations */
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0px,   0px)   scale(1);    }
+  33%       { transform: translate(40px,  -60px) scale(1.08); }
+  66%       { transform: translate(-30px,  30px) scale(0.94); }
+}
+@keyframes orb-drift-reverse {
+  0%, 100% { transform: translate(0px,   0px)   scale(1);    }
+  33%       { transform: translate(-50px, 40px)  scale(0.92); }
+  66%       { transform: translate(35px, -45px)  scale(1.06); }
+}
+@keyframes orb-drift-slow {
+  0%, 100% { transform: translate(0px,  0px)  scale(1);    }
+  50%       { transform: translate(-40px, 50px) scale(1.12); }
+}
+
+.landing-orb         { animation: orb-drift         18s ease-in-out infinite; }
+.landing-orb-reverse { animation: orb-drift-reverse 22s ease-in-out infinite; }
+.landing-orb-slow    { animation: orb-drift-slow    28s ease-in-out infinite; }
