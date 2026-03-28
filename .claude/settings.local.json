@@ -6,7 +6,9 @@
       "Bash(npm run:*)",
       "Bash(curl -s \"https://api.twitterapi.io/twitter/user/last_tweets?userName=Zeneca&limit=10\" -H \"X-API-Key: new1_ae3616b14f6e4f8fb9974abb761b8f07\")",
       "WebFetch(domain:localhost)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

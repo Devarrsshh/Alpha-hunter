@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { supabase } from '@/lib/supabase';
 
@@ -326,7 +326,18 @@ export async function runCleanup(): Promise<{ deleted: number; error: string | n
 // Main handler
 // ─────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Allow unauthenticated calls in local dev so the UI auto-scan still works
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (!isDev) {
+    const cronSecret = process.env.CRON_SECRET;
+    const auth       = request.headers.get('authorization');
+    if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   try {
     const engagementMap = new Map<string, TweetEngagement>();
 

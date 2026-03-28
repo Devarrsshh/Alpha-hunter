@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/fetch-tweets",
+      "schedule": "0 6,18 * * *"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, Project } from '@/lib/supabase';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
@@ -52,12 +52,14 @@ export default function AlphaFeed() {
   const [projects,         setProjects]         = useState<Project[]>([]);
   const [loading,          setLoading]          = useState(true);
   const [refreshing,       setRefreshing]       = useState(false);
+  const [autoScanning,     setAutoScanning]     = useState(false);
   const [filterChain,      setFilterChain]      = useState('all');
   const [search,           setSearch]           = useState('');
   const [selectedProject,  setSelectedProject]  = useState<Project | null>(null);
   const [lastScan,         setLastScan]         = useState<Date | null>(null);
   const [, setTick] = useState(0);
   const chainBarRef = useRef<HTMLDivElement>(null);
+  const autoScanTriggered = useRef(false);
 
   // Re-render every minute so relative time stays fresh
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function AlphaFeed() {
     return () => clearInterval(id);
   }, []);
 
-  const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async (): Promise<Project[]> => {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -73,14 +75,12 @@ export default function AlphaFeed() {
 
     if (!error && data) {
       setProjects(data as Project[]);
+      return data as Project[];
     }
-    setLoading(false);
-    setRefreshing(false);
+    return [];
   }, []);
 
-  useEffect(() => { fetchProjects(); }, [fetchProjects]);
-
-  const handleScan = async () => {
+  const handleScan = useCallback(async () => {
     setRefreshing(true);
     try {
       const res  = await fetch('/api/fetch-tweets');
@@ -90,13 +90,26 @@ export default function AlphaFeed() {
         await fetchProjects();
       } else {
         console.error('Scan error:', json.error);
-        setRefreshing(false);
       }
     } catch (err) {
       console.error(err);
+    } finally {
       setRefreshing(false);
+      setAutoScanning(false);
     }
-  };
+  }, [fetchProjects]);
+
+  useEffect(() => {
+    (async () => {
+      const data = await fetchProjects();
+      setLoading(false);
+      if (data.length === 0 && !autoScanTriggered.current) {
+        autoScanTriggered.current = true;
+        setAutoScanning(true);
+        await handleScan();
+      }
+    })();
+  }, [fetchProjects, handleScan]);
 
   const filtered = projects.filter((p) => {
     const matchChain  = filterChain === 'all' || p.chain?.toLowerCase() === filterChain;
@@ -195,7 +208,7 @@ export default function AlphaFeed() {
             <div
               ref={chainBarRef}
               className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-1"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
             >
               {CHAINS.map(({ key, label }) => (
                 <button
@@ -235,29 +248,25 @@ export default function AlphaFeed() {
         </div>
 
         {/* ── Feed ── */}
-        {loading ? (
+        {loading || autoScanning ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-10 h-10 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
-            <p className="text-sm text-slate-500">Loading alpha signals...</p>
+            <p className="text-sm text-slate-500">
+              {autoScanning ? 'Fetching alpha from 33 hunters...' : 'Loading alpha signals...'}
+            </p>
+            {autoScanning && (
+              <p className="text-xs text-slate-600 max-w-xs text-center">
+                Scanning Twitter & extracting signals with AI — this takes ~30s
+              </p>
+            )}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
             <div className="text-4xl">🔭</div>
             <p className="text-base font-medium text-slate-400">No signals found</p>
             <p className="text-sm text-slate-600 max-w-xs">
-              {projects.length === 0
-                ? 'Hit "Run Scan" to fetch tweets and extract alpha signals from the hunters.'
-                : 'Try adjusting your filters or search query.'}
+              Try adjusting your filters or search query.
             </p>
-            {projects.length === 0 && (
-              <button
-                onClick={handleScan}
-                disabled={refreshing}
-                className="mt-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
-              >
-                Run First Scan
-              </button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -272,8 +281,8 @@ export default function AlphaFeed() {
           </div>
         )}
 
-        {/* ── Scanning toast ── */}
-        {refreshing && (
+        {/* ── Scanning toast (only show when not full-screen auto-scanning) ── */}
+        {refreshing && !autoScanning && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#0d1117] border border-indigo-500/40 shadow-2xl shadow-indigo-500/20 card-glow">
             <div className="w-4 h-4 rounded-full border-2 border-indigo-400/30 border-t-indigo-400 animate-spin shrink-0" />
             <div>

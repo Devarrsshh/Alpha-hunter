@@ -109,14 +109,21 @@ export default function ProjectCard({ project, rank, onClick }: { project: Proje
     <article
       onClick={onClick}
       className={[
-        'card-enter group relative rounded-2xl border p-5 transition-all duration-300 cursor-pointer',
-        'hover:-translate-y-0.5 hover:shadow-2xl',
+        'card-enter group relative rounded-2xl border p-5 transition-all duration-300 cursor-pointer select-none',
+        'hover:-translate-y-0.5',
         isTop3
-          ? 'border-indigo-500/50 bg-gradient-to-br from-[#0f1629] to-[#0d1117] shadow-lg shadow-indigo-500/10 card-glow hover:border-indigo-400/70 hover:shadow-indigo-500/25'
-          : 'border-white/[0.07] bg-[#0d1117] hover:border-indigo-500/40 hover:shadow-indigo-500/10',
+          ? 'border-indigo-500/50 bg-gradient-to-br from-[#0f1629] to-[#0d1117] shadow-lg shadow-indigo-500/10 card-glow hover:border-indigo-400/80 hover:shadow-[0_0_40px_rgba(99,102,241,0.25)]'
+          : 'border-white/[0.07] bg-[#0d1117] hover:border-indigo-500/50 hover:shadow-[0_0_30px_rgba(99,102,241,0.12)]',
       ].join(' ')}
       style={{ animationDelay: `${rank * 40}ms` }}
     >
+      {/* Expand hint — appears on hover */}
+      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <svg className="w-3.5 h-3.5 text-indigo-500/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      </div>
+
       {/* Top row */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
