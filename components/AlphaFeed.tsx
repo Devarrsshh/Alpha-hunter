@@ -32,7 +32,7 @@ export default function AlphaFeed() {
   const [filterType,      setFilterType]      = useState('all');
   const [search,          setSearch]          = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [lastScan,        setLastScan]        = useState<Date | null>(null);
+  const [lastScan,        setLastScan]        = useState<Date>(() => new Date());
   const [, setTick] = useState(0);
   const autoScanTriggered = useRef(false);
 
@@ -59,7 +59,7 @@ export default function AlphaFeed() {
       const res  = await fetch('/api/fetch-tweets');
       const json = await res.json();
       if (json.success) {
-        setLastScan(new Date());
+        setLastScan(new Date()); // refresh to now on successful scan
         await fetchProjects();
       } else {
         console.error('Scan error:', json.error);
@@ -119,6 +119,7 @@ export default function AlphaFeed() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex-1 bg-transparent text-sm font-mono text-slate-300 placeholder-[#333] focus:outline-none"
                 />
+                {!search && <span className="font-mono text-sm text-[#6366f1]/70 cursor-blink shrink-0">_</span>}
               </div>
             </div>
 
@@ -150,7 +151,7 @@ export default function AlphaFeed() {
           <div className="flex flex-wrap gap-10">
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">{projects.length}</div>
-              <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">SIGNALS</div>
+              <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">EARLY PROJECTS</div>
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">33</div>
@@ -162,7 +163,7 @@ export default function AlphaFeed() {
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">
-                {lastScan ? formatRelative(lastScan) : '—'}
+                {formatRelative(lastScan)}
               </div>
               <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">LAST SCAN</div>
             </div>
@@ -206,6 +207,7 @@ export default function AlphaFeed() {
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent text-sm font-mono text-slate-300 placeholder-[#333] focus:outline-none"
             />
+            {!search && <span className="font-mono text-sm text-[#6366f1]/70 cursor-blink shrink-0">_</span>}
           </div>
         </div>
 

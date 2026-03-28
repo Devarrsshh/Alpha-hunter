@@ -51,15 +51,20 @@ export default function ProjectCard({
   const typeKey  = project.alpha_type?.toLowerCase().trim() ?? '';
   const typeLabel = isEmpty(typeKey) ? null : (TYPE_LABEL[typeKey] ?? typeKey.toUpperCase());
 
-  // Hype bar width: hype_level / 10, capped
+  // Hype bar: uniform indigo, width proportional to hype_level
   const hypeWidth = project.hype_level
     ? `${Math.min(100, Math.max(0, (project.hype_level / 10) * 100))}%`
     : '0%';
 
-  // Hype bar color
-  const hypeColor =
-    (project.hype_level ?? 0) >= 8 ? '#f97316' :
-    (project.hype_level ?? 0) >= 5 ? '#eab308' : '#6366f1';
+  // Left accent border color by alpha type
+  const TYPE_ACCENT: Record<string, string> = {
+    'new token': '#6366f1',
+    nft:         '#8b5cf6',
+    airdrop:     '#22c55e',
+    defi:        '#3b82f6',
+    other:       '#64748b',
+  };
+  const accentColor = TYPE_ACCENT[typeKey] ?? '#64748b';
 
   const isNew = (Date.now() - new Date(project.first_spotted).getTime()) < 6 * 3_600_000;
 
@@ -67,7 +72,7 @@ export default function ProjectCard({
     <article
       onClick={onClick}
       className="card-enter group relative flex flex-col bg-[#111] border border-[#1a1a1a] hover:border-[#2a2a2a] transition-all duration-200 cursor-pointer"
-      style={{ animationDelay: `${rank * 30}ms` }}
+      style={{ animationDelay: `${rank * 30}ms`, borderLeft: `3px solid ${accentColor}` }}
     >
       {/* Body */}
       <div className="flex flex-col gap-3 p-5 flex-1">
@@ -140,10 +145,10 @@ export default function ProjectCard({
         </span>
       </div>
 
-      {/* Hype bar — absolute bottom line */}
+      {/* Hype bar — absolute bottom line, always indigo */}
       <div
         className="absolute bottom-0 left-0 h-[2px] transition-all duration-700"
-        style={{ width: hypeWidth, backgroundColor: hypeColor, opacity: 0.7 }}
+        style={{ width: hypeWidth, backgroundColor: '#6366f1', opacity: 0.6 }}
       />
     </article>
   );
