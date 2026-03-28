@@ -128,9 +128,20 @@ async function fetchTweetsForUser(
 
     console.log(`[${username}] fetched ${rawTweets.length} tweets`);
 
+    const cutoff = Date.now() - 72 * 60 * 60 * 1000; // 72 hours ago
     const tweetLines: string[] = [];
+    let skipped = 0;
 
     for (const t of rawTweets) {
+      // Skip tweets older than 72 hours
+      if (t.createdAt) {
+        const tweetAge = new Date(t.createdAt).getTime();
+        if (isNaN(tweetAge) || tweetAge < cutoff) {
+          skipped++;
+          continue;
+        }
+      }
+
       const tweetUrl = t.url ?? t.twitterUrl ?? `https://twitter.com/${username}/status/${t.id}`;
 
       // Populate engagement map for scoring later
@@ -144,6 +155,8 @@ async function fetchTweetsForUser(
         `[@${username}] ${t.text ?? ''} | likes:${t.likeCount ?? 0} rts:${t.retweetCount ?? 0} | URL: ${tweetUrl}`
       );
     }
+
+    if (skipped > 0) console.log(`[${username}] skipped ${skipped} tweets older than 72h`);
 
     return { username, tweetLines };
   } catch (err) {

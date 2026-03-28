@@ -98,10 +98,7 @@ export default function LandingPage() {
           </svg>
         </Link>
 
-        {/* Footer note */}
-        <p className="mt-6 text-xs text-slate-600">
-          Powered by Twitter API · Claude AI · Supabase
-        </p>
+
       </div>
     </div>
   );
