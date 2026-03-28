@@ -374,10 +374,15 @@ async function upsertProject(
 export async function runCleanup(): Promise<{ deleted: number; error: string | null }> {
   const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+  // Only archive projects that are BOTH old AND low-signal:
+  // older than 7 days + hype ≤ 3 + buzz < 5 + only 1 hunter mention
   const { data, error } = await supabase
     .from('projects')
     .delete()
     .lt('first_spotted', cutoff)
+    .lte('hype_level', 3)
+    .lt('buzz_count', 5)
+    .lte('mention_count', 1)
     .select('id');
 
   if (error) {
@@ -386,7 +391,7 @@ export async function runCleanup(): Promise<{ deleted: number; error: string | n
   }
 
   const deleted = data?.length ?? 0;
-  console.log(`Cleanup: removed ${deleted} projects older than 7 days (cutoff: ${cutoff})`);
+  console.log(`Cleanup: archived ${deleted} low-signal projects older than 7 days (cutoff: ${cutoff})`);
   return { deleted, error: null };
 }
 
