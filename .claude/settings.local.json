@@ -8,7 +8,8 @@
       "WebFetch(domain:localhost)",
       "Bash(curl:*)",
       "Bash(ls:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

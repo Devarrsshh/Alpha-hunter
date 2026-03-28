@@ -175,7 +175,7 @@ export default function ProjectModal({ project, onClose }: { project: Project; o
       {/* Drawer */}
       <div
         className={[
-          'relative h-full w-full max-w-lg bg-[#080c18] border-l border-white/[0.08] shadow-2xl flex flex-col overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+          'relative h-full w-full max-w-lg bg-[#0f0f0f] border-l border-[#1a1a1a] shadow-2xl flex flex-col overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
           visible ? 'translate-x-0' : 'translate-x-full',
         ].join(' ')}
       >
