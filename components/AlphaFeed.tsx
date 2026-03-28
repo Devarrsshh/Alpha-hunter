@@ -56,7 +56,7 @@ export default function AlphaFeed() {
   // Fetch last scan time from DB (shared across all users)
   const fetchLastScanTime = useCallback(async () => {
     const { data, error } = await supabase
-      .from('app_meta')
+      .from('settings')
       .select('value')
       .eq('key', 'last_scan_at')
       .maybeSingle();
