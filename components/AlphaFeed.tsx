@@ -119,6 +119,7 @@ export default function AlphaFeed() {
   const isCoolingDown = cooldownRemaining > 0;
 
   const filtered = projects.filter((p) => {
+    if ((p.hype_level ?? 0) <= 3) return false;
     const matchType   = filterType === 'all' || p.alpha_type?.toLowerCase() === filterType;
     const matchSearch = !search ||
       p.name?.toLowerCase().includes(search.toLowerCase()) ||
