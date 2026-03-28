@@ -135,8 +135,9 @@ export default function AlphaFeed() {
     return matchType && matchSearch;
   });
 
-  const chainCount = new Set(projects.map((p) => p.chain?.toLowerCase()).filter(Boolean)).size;
-  const topHype    = projects.reduce((max, p) => Math.max(max, p.hype_level ?? 0), 0);
+  const visibleCount = projects.filter((p) => (p.hype_level ?? 0) >= 4).length;
+  const chainCount   = new Set(projects.map((p) => p.chain?.toLowerCase()).filter(Boolean)).size;
+  const topHype      = projects.reduce((max, p) => Math.max(max, p.hype_level ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -199,7 +200,7 @@ export default function AlphaFeed() {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-wrap gap-10">
             <div>
-              <div className="font-mono text-3xl font-bold text-white tabular-nums">{projects.length}</div>
+              <div className="font-mono text-3xl font-bold text-white tabular-nums">{visibleCount}</div>
               <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">EARLY PROJECTS</div>
             </div>
             <div>
