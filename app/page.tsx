@@ -68,7 +68,7 @@ export default function LandingPage() {
 
         {/* Subheadline */}
         <p className="mb-10 max-w-md text-base text-slate-400 leading-relaxed">
-          We monitor 33 of crypto&apos;s top alpha hunters on Twitter and use AI to surface the earliest signals — before they go viral.
+          We monitor 33 of crypto&apos;s top alpha hunters on Twitter and use AI to surface early project signals for your own research.
         </p>
 
         {/* Feature pills */}
