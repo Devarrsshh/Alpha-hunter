@@ -69,7 +69,9 @@ export default function AlphaFeed() {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
-      .order('score', { ascending: false });
+      .order('hype_level',    { ascending: false, nullsFirst: false })
+      .order('mention_count', { ascending: false })
+      .order('first_spotted', { ascending: false });
     if (!error && data) {
       setProjects(data as Project[]);
       return data as Project[];
@@ -125,6 +127,7 @@ export default function AlphaFeed() {
   });
 
   const chainCount = new Set(projects.map((p) => p.chain?.toLowerCase()).filter(Boolean)).size;
+  const topHype    = projects.reduce((max, p) => Math.max(max, p.hype_level ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -197,6 +200,15 @@ export default function AlphaFeed() {
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">{chainCount}</div>
               <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">CHAINS</div>
+            </div>
+            <div>
+              <div
+                className="font-mono text-3xl font-bold tabular-nums"
+                style={{ color: topHype >= 8 ? '#22c55e' : topHype >= 5 ? '#eab308' : '#94a3b8' }}
+              >
+                {topHype > 0 ? `${topHype}/10` : '—'}
+              </div>
+              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">TOP HYPE</div>
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">
