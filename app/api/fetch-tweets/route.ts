@@ -397,6 +397,13 @@ export async function GET(request: NextRequest) {
       await upsertProject(project, engagementMap);
     }
 
+    // Write scan timestamp so the UI can enforce a 2-hour cooldown
+    await supabase.from('app_meta').upsert({
+      key:        'last_scan_at',
+      value:      new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
     return NextResponse.json({
       success:         true,
       cleaned_up:      cleanup.deleted,

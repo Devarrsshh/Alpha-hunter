@@ -14,6 +14,8 @@ const TYPE_FILTERS = [
   { key: 'other',     label: 'OTHER' },
 ];
 
+const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
+
 function formatRelative(date: Date): string {
   const diff  = Date.now() - date.getTime();
   const mins  = Math.floor(diff / 60_000);
@@ -24,6 +26,15 @@ function formatRelative(date: Date): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function formatCooldown(ms: number): string {
+  const totalMins = Math.ceil(ms / 60_000);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
 export default function AlphaFeed() {
   const [projects,        setProjects]        = useState<Project[]>([]);
   const [loading,         setLoading]         = useState(true);
@@ -32,13 +43,26 @@ export default function AlphaFeed() {
   const [filterType,      setFilterType]      = useState('all');
   const [search,          setSearch]          = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [lastScan,        setLastScan]        = useState<Date>(() => new Date());
+  const [lastScan,        setLastScan]        = useState<Date | null>(null);
   const [, setTick] = useState(0);
   const autoScanTriggered = useRef(false);
 
+  // Re-render every minute to keep countdown accurate
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60_000);
     return () => clearInterval(id);
+  }, []);
+
+  // Fetch last scan time from DB (shared across all users)
+  const fetchLastScanTime = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('app_meta')
+      .select('value')
+      .eq('key', 'last_scan_at')
+      .maybeSingle();
+    if (!error && data?.value) {
+      setLastScan(new Date(data.value));
+    }
   }, []);
 
   const fetchProjects = useCallback(async (): Promise<Project[]> => {
@@ -59,7 +83,8 @@ export default function AlphaFeed() {
       const res  = await fetch('/api/fetch-tweets');
       const json = await res.json();
       if (json.success) {
-        setLastScan(new Date()); // refresh to now on successful scan
+        const now = new Date();
+        setLastScan(now);
         await fetchProjects();
       } else {
         console.error('Scan error:', json.error);
@@ -74,6 +99,7 @@ export default function AlphaFeed() {
 
   useEffect(() => {
     (async () => {
+      await fetchLastScanTime();
       const data = await fetchProjects();
       setLoading(false);
       if (data.length === 0 && !autoScanTriggered.current) {
@@ -82,7 +108,13 @@ export default function AlphaFeed() {
         await handleScan();
       }
     })();
-  }, [fetchProjects, handleScan]);
+  }, [fetchLastScanTime, fetchProjects, handleScan]);
+
+  // Cooldown
+  const cooldownRemaining = lastScan
+    ? Math.max(0, COOLDOWN_MS - (Date.now() - lastScan.getTime()))
+    : 0;
+  const isCoolingDown = cooldownRemaining > 0;
 
   const filtered = projects.filter((p) => {
     const matchType   = filterType === 'all' || p.alpha_type?.toLowerCase() === filterType;
@@ -126,13 +158,18 @@ export default function AlphaFeed() {
             {/* Run Scan */}
             <button
               onClick={handleScan}
-              disabled={refreshing}
+              disabled={refreshing || isCoolingDown}
               className="flex items-center gap-2 px-3 py-1.5 font-mono text-xs tracking-widest border border-[#2a2a2a] text-slate-400 hover:border-[#6366f1]/60 hover:text-[#6366f1] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               {refreshing ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] animate-pulse" />
                   SCANNING...
+                </>
+              ) : isCoolingDown ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full border border-current" />
+                  NEXT SCAN IN {formatCooldown(cooldownRemaining)}
                 </>
               ) : (
                 <>
@@ -163,7 +200,7 @@ export default function AlphaFeed() {
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">
-                {formatRelative(lastScan)}
+                {lastScan ? formatRelative(lastScan) : '—'}
               </div>
               <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">LAST SCAN</div>
             </div>
