@@ -400,15 +400,19 @@ export async function runCleanup(): Promise<{ deleted: number; error: string | n
 // ─────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  // If the request carries an Authorization header, treat it as a cron call and validate the secret.
-  // Browser requests from the frontend send no Authorization header and are always allowed.
-  const auth = request.headers.get('authorization');
-  if (auth) {
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  // Auth logic:
+  // - If CRON_SECRET is not set in env vars → allow all requests (cron + browser)
+  // - If CRON_SECRET is set AND request sends an Authorization header → validate it
+  // - If CRON_SECRET is set AND no Authorization header → allow (browser button calls)
+  const cronSecret = process.env.CRON_SECRET;
+  const auth       = request.headers.get('authorization');
+
+  if (cronSecret && auth && auth !== `Bearer ${cronSecret}`) {
+    console.warn('[auth] Rejected request with invalid CRON_SECRET');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  console.log(`[auth] Request allowed — CRON_SECRET configured: ${!!cronSecret}, auth header present: ${!!auth}`);
 
   try {
     const engagementMap = new Map<string, TweetEngagement>();
