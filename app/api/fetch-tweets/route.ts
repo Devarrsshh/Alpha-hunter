@@ -279,7 +279,93 @@ For each qualifying project, return a JSON array. Each object must have exactly 
 Return only a valid JSON array, no extra text, no markdown fences.`;
 
 // ─────────────────────────────────────────────
-// Part 3: Upsert with dedup, merge, and scoring
+// Part 3: Smart deduplication helpers
+// ─────────────────────────────────────────────
+
+// Extract ticker symbol like $PRL or $OFC from a project name
+function extractTicker(name: string): string | null {
+  const match = name.match(/\$([A-Za-z]{2,10})/);
+  return match ? match[1].toUpperCase() : null;
+}
+
+// Extract the meaningful first word before any space, bracket, or $ sign
+function extractFirstWord(name: string): string {
+  return name.toLowerCase().trim().split(/[\s($]/)[0].replace(/[^a-z0-9]/g, '');
+}
+
+type ExistingProject = {
+  id: string;
+  name: string;
+  mention_count: number;
+  tweet_links: string[];
+  mentioned_by: string[];
+  first_spotted: string;
+  hype_level: number;
+  project_twitter: string;
+  project_website: string;
+  contract_address: string;
+};
+
+const EXISTING_SELECT = 'id, name, mention_count, tweet_links, mentioned_by, first_spotted, hype_level, project_twitter, project_website, contract_address';
+
+async function findExistingProject(project: AlphaProject): Promise<ExistingProject | null> {
+  const nameLower = project.project_name.toLowerCase().trim();
+
+  // 1. Exact name match (fastest path)
+  {
+    const { data } = await supabase
+      .from('projects').select(EXISTING_SELECT).ilike('name', nameLower).maybeSingle();
+    if (data) return data as ExistingProject;
+  }
+
+  // 2. First-word match: "OFC (Official Football Club)" vs "OFC (The Club)"
+  const firstWord = extractFirstWord(project.project_name);
+  if (firstWord.length >= 3) {
+    const { data } = await supabase
+      .from('projects').select(EXISTING_SELECT).ilike('name', `${firstWord}%`).limit(10);
+    const match = (data ?? []).find(
+      (p: ExistingProject) => extractFirstWord(p.name) === firstWord
+    );
+    if (match) {
+      console.log(`[dedup] First-word match: "${project.project_name}" → "${match.name}"`);
+      return match as ExistingProject;
+    }
+  }
+
+  // 3. Ticker match: "$PRL" in "Perle Labs ($PRL)" matches "PRL" in "PRL (Perle Labs)"
+  const ticker = extractTicker(project.project_name);
+  if (ticker && ticker.length >= 2) {
+    const { data } = await supabase
+      .from('projects').select(EXISTING_SELECT).ilike('name', `%${ticker}%`).limit(10);
+    const match = (data ?? []).find((p: ExistingProject) => {
+      const t = extractTicker(p.name);
+      return t === ticker || extractFirstWord(p.name) === ticker.toLowerCase();
+    });
+    if (match) {
+      console.log(`[dedup] Ticker match ($${ticker}): "${project.project_name}" → "${match.name}"`);
+      return match as ExistingProject;
+    }
+  }
+
+  // 4. Tweet URL overlap: 2+ shared URLs = same project regardless of name
+  if (project.tweet_urls.length > 0) {
+    const { data } = await supabase
+      .from('projects').select(EXISTING_SELECT).overlaps('tweet_links', project.tweet_urls);
+    const match = (data ?? []).find((p: ExistingProject) => {
+      const shared = (p.tweet_links ?? []).filter((u) => project.tweet_urls.includes(u));
+      return shared.length >= 2;
+    });
+    if (match) {
+      console.log(`[dedup] Tweet-URL overlap match: "${project.project_name}" → "${match.name}"`);
+      return match as ExistingProject;
+    }
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────
+// Part 4: Upsert with dedup, merge, and scoring
 // ─────────────────────────────────────────────
 
 async function upsertProject(
@@ -287,32 +373,28 @@ async function upsertProject(
   engagementMap: Map<string, TweetEngagement>,
   buzzCount: number
 ) {
-  const nameLower = project.project_name.toLowerCase().trim();
+  const existing = await findExistingProject(project);
 
-  const { data: existing, error: fetchErr } = await supabase
-    .from('projects')
-    .select('id, mention_count, tweet_links, mentioned_by, first_spotted, verdict, project_twitter, project_website, contract_address')
-    .ilike('name', nameLower)
-    .maybeSingle();
-
-  if (fetchErr) {
-    console.error(`Supabase fetch error for "${project.project_name}":`, fetchErr.message);
-    return;
+  if (existing === null) {
+    // check for Supabase errors propagated as null — already logged inside findExistingProject
   }
 
   const now = new Date().toISOString();
 
   if (existing) {
     // ── Merge arrays (dedup) ──
-    const mergedLinks       = Array.from(new Set([...(existing.tweet_links ?? []),    ...project.tweet_urls]));
-    const mergedMentionedBy = Array.from(new Set([...(existing.mentioned_by ?? []),   ...project.mentioned_by]));
+    const mergedLinks       = Array.from(new Set([...(existing.tweet_links ?? []),  ...project.tweet_urls]));
+    const mergedMentionedBy = Array.from(new Set([...(existing.mentioned_by ?? []), ...project.mentioned_by]));
     const newMentionCount   = mergedMentionedBy.length;
 
-    // ── Keep earliest first_spotted ──
+    // ── Keep earlier first_spotted ──
     const existingDate = new Date(existing.first_spotted ?? now);
     const keepSpotted  = existingDate < new Date(now) ? existing.first_spotted : now;
 
-    // ── Recalculate score with updated data ──
+    // ── Keep higher hype_level ──
+    const keepHype = Math.max(existing.hype_level ?? 0, project.hype_level ?? 0);
+
+    // ── Recalculate score ──
     const newScore = calculateScore({
       mentionCount:  newMentionCount,
       tweetUrls:     mergedLinks,
@@ -329,6 +411,7 @@ async function upsertProject(
         mentioned_by:     mergedMentionedBy,
         first_spotted:    keepSpotted,
         score:            newScore,
+        hype_level:       keepHype,
         buzz_count:       buzzCount,
         project_twitter:  project.project_twitter  || existing.project_twitter  || '',
         project_website:  project.project_website  || existing.project_website  || '',
