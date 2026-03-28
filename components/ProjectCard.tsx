@@ -77,7 +77,6 @@ export default function ProjectCard({
   rank: number;
   onClick: () => void;
 }) {
-  const idTag      = project.id.replace(/-/g, '').slice(0, 6).toUpperCase();
   const chainKey   = project.chain?.toLowerCase().trim() ?? '';
   const chainLabel = isEmpty(chainKey) ? null : (CHAIN_LABEL[chainKey] ?? chainKey.toUpperCase());
   const chainColor = CHAIN_COLOR[chainKey] ?? { bg: 'rgba(148,163,184,0.1)', text: '#94a3b8' };
@@ -119,9 +118,6 @@ export default function ProjectCard({
         <div className="flex items-center justify-between gap-2">
           {/* Left: ID tag + chain pill + type label */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-mono text-[10px] text-[#475569] tracking-wider shrink-0">
-              [ {idTag} ]
-            </span>
             {chainLabel && (
               <span
                 className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 rounded-sm border border-transparent"
