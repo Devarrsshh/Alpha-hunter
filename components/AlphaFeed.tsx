@@ -117,7 +117,7 @@ export default function AlphaFeed() {
                   placeholder="Query alpha signals..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-mono text-slate-300 placeholder-[#333] focus:outline-none"
+                  className="flex-1 bg-transparent text-sm font-mono text-slate-300 placeholder-[#475569] focus:outline-none"
                 />
                 {!search && <span className="font-mono text-sm text-[#6366f1]/70 cursor-blink shrink-0">_</span>}
               </div>
@@ -151,21 +151,21 @@ export default function AlphaFeed() {
           <div className="flex flex-wrap gap-10">
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">{projects.length}</div>
-              <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">EARLY PROJECTS</div>
+              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">EARLY PROJECTS</div>
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">33</div>
-              <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">HUNTERS</div>
+              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">HUNTERS</div>
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">{chainCount}</div>
-              <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">CHAINS</div>
+              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">CHAINS</div>
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">
                 {formatRelative(lastScan)}
               </div>
-              <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mt-1">LAST SCAN</div>
+              <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">LAST SCAN</div>
             </div>
           </div>
         </div>
@@ -184,14 +184,14 @@ export default function AlphaFeed() {
                   'px-3 py-1 font-mono text-xs tracking-widest transition-all',
                   filterType === key
                     ? 'text-[#6366f1] border-b border-[#6366f1]'
-                    : 'text-[#444] hover:text-[#888]',
+                    : 'text-[#94a3b8] hover:text-white',
                 ].join(' ')}
               >
                 {label}
               </button>
             ))}
           </div>
-          <span className="font-mono text-xs text-[#333]">
+          <span className="font-mono text-xs text-[#94a3b8]">
             {filtered.length}/{projects.length} RESULTS
           </span>
         </div>
@@ -205,7 +205,7 @@ export default function AlphaFeed() {
               placeholder="Query alpha signals..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent text-sm font-mono text-slate-300 placeholder-[#333] focus:outline-none"
+              className="flex-1 bg-transparent text-sm font-mono text-slate-300 placeholder-[#475569] focus:outline-none"
             />
             {!search && <span className="font-mono text-sm text-[#6366f1]/70 cursor-blink shrink-0">_</span>}
           </div>
@@ -218,7 +218,7 @@ export default function AlphaFeed() {
               {autoScanning ? '> FETCHING ALPHA FROM 33 HUNTERS...' : '> LOADING SIGNALS...'}
             </div>
             {autoScanning && (
-              <div className="font-mono text-xs text-[#333] tracking-wider">
+              <div className="font-mono text-xs text-[#94a3b8] tracking-wider">
                 SCANNING TWITTER · EXTRACTING WITH AI · EST. 30s
               </div>
             )}
@@ -234,8 +234,8 @@ export default function AlphaFeed() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-2">
-            <div className="font-mono text-sm text-[#333] tracking-widest">// NO SIGNALS FOUND</div>
-            <div className="font-mono text-xs text-[#222]">ADJUST FILTERS OR QUERY</div>
+            <div className="font-mono text-sm text-[#94a3b8] tracking-widest">// NO SIGNALS FOUND</div>
+            <div className="font-mono text-xs text-[#64748b]">ADJUST FILTERS OR QUERY</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -256,7 +256,7 @@ export default function AlphaFeed() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] animate-pulse shrink-0" />
             <div>
               <div className="font-mono text-xs text-white tracking-widest">SCANNING HUNTERS...</div>
-              <div className="font-mono text-[10px] text-[#444] mt-0.5">FETCHING · EXTRACTING · UPSERTING</div>
+              <div className="font-mono text-[10px] text-[#94a3b8] mt-0.5">FETCHING · EXTRACTING · UPSERTING</div>
             </div>
           </div>
         )}
@@ -268,8 +268,8 @@ export default function AlphaFeed() {
 
       <footer className="border-t border-[#1a1a1a] mt-16 py-6">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <span className="font-mono text-[10px] text-[#2a2a2a] tracking-widest">ALPHA_HUNTER v1.0</span>
-          <span className="font-mono text-[10px] text-[#2a2a2a] tracking-widest">
+          <span className="font-mono text-[10px] text-[#475569] tracking-widest">ALPHA_HUNTER v1.0</span>
+          <span className="font-mono text-[10px] text-[#475569] tracking-widest">
             TWITTERAPI.IO · CLAUDE AI · SUPABASE
           </span>
         </div>

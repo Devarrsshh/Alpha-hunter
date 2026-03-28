@@ -80,7 +80,7 @@ export default function ProjectCard({
         {/* Top row: ID tag + badges */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] text-[#333] tracking-wider">
+            <span className="font-mono text-[10px] text-[#475569] tracking-wider">
               [ {idTag} ]
             </span>
             {isNew && (
@@ -89,22 +89,22 @@ export default function ProjectCard({
           </div>
           <div className="flex items-center gap-2">
             {chainLabel && (
-              <span className="font-mono text-[10px] text-[#444] tracking-wider">{chainLabel}</span>
+              <span className="font-mono text-[10px] text-[#94a3b8] tracking-wider">{chainLabel}</span>
             )}
             {typeLabel && (
-              <span className="font-mono text-[10px] text-[#444] tracking-wider">{typeLabel}</span>
+              <span className="font-mono text-[10px] text-[#94a3b8] tracking-wider">{typeLabel}</span>
             )}
           </div>
         </div>
 
         {/* Project name */}
-        <h3 className="text-[17px] font-semibold text-white leading-snug tracking-tight">
+        <h3 className="text-[20px] font-semibold text-white leading-snug tracking-tight">
           {project.name}
         </h3>
 
         {/* Summary — 2 lines */}
         <p
-          className="text-sm text-[#555] leading-relaxed"
+          className="text-[14px] text-[#94a3b8] leading-[1.6]"
           style={{
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -119,12 +119,12 @@ export default function ProjectCard({
         {project.mentioned_by?.length > 1 && (
           <div className="flex flex-wrap gap-1.5">
             {project.mentioned_by.slice(0, 4).map((h) => (
-              <span key={h} className="font-mono text-[10px] text-[#6366f1]/60 tracking-wider">
+              <span key={h} className="font-mono text-[10px] text-[#818cf8] tracking-wider">
                 @{h}
               </span>
             ))}
             {project.mentioned_by.length > 4 && (
-              <span className="font-mono text-[10px] text-[#2a2a2a]">
+              <span className="font-mono text-[10px] text-[#64748b]">
                 +{project.mentioned_by.length - 4}
               </span>
             )}
@@ -135,12 +135,12 @@ export default function ProjectCard({
       {/* Footer row */}
       <div className="flex items-center justify-between px-5 py-3 border-t border-[#1a1a1a]">
         <span
-          className="font-mono text-[10px] text-[#333] tracking-wider"
+          className="font-mono text-[10px] text-[#94a3b8] tracking-wider"
           title={formatFull(project.first_spotted)}
         >
           {formatRelative(project.first_spotted)}
         </span>
-        <span className="font-mono text-[10px] text-[#6366f1]/60 tracking-wider group-hover:text-[#6366f1] transition-colors">
+        <span className="font-mono text-[10px] text-[#6366f1] tracking-wider group-hover:text-[#818cf8] transition-colors">
           VIEW ↗
         </span>
       </div>
