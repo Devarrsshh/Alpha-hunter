@@ -60,8 +60,16 @@ export default function AlphaFeed() {
       .select('value')
       .eq('key', 'last_scan_at')
       .maybeSingle();
-    if (!error && data?.value) {
-      setLastScan(new Date(data.value));
+    if (error) {
+      console.error('[LAST SCAN] Failed to read from settings table:', error.message, error.code);
+      return;
+    }
+    if (data?.value) {
+      const parsed = new Date(data.value);
+      console.log('[LAST SCAN] Loaded from DB:', data.value);
+      setLastScan(parsed);
+    } else {
+      console.log('[LAST SCAN] No last_scan_at row found in settings table yet.');
     }
   }, []);
 
@@ -213,7 +221,7 @@ export default function AlphaFeed() {
             </div>
             <div>
               <div className="font-mono text-3xl font-bold text-white tabular-nums">
-                {lastScan ? formatRelative(lastScan) : '—'}
+                {lastScan ? formatRelative(lastScan) : 'Never'}
               </div>
               <div className="font-mono text-[10px] text-[#94a3b8] uppercase tracking-widest mt-1">LAST SCAN</div>
             </div>

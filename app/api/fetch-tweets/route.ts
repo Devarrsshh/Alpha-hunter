@@ -400,12 +400,11 @@ export async function runCleanup(): Promise<{ deleted: number; error: string | n
 // ─────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  // Allow unauthenticated calls in local dev so the UI auto-scan still works
-  const isDev = process.env.NODE_ENV === 'development';
-
-  if (!isDev) {
+  // If the request carries an Authorization header, treat it as a cron call and validate the secret.
+  // Browser requests from the frontend send no Authorization header and are always allowed.
+  const auth = request.headers.get('authorization');
+  if (auth) {
     const cronSecret = process.env.CRON_SECRET;
-    const auth       = request.headers.get('authorization');
     if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -476,7 +475,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Write scan timestamp for LAST SCAN display and 2-hour cooldown
-    await supabase.from('settings').upsert({ key: 'last_scan_at', value: new Date().toISOString() });
+    const scanTime = new Date().toISOString();
+    const { error: settingsErr } = await supabase
+      .from('settings')
+      .upsert({ key: 'last_scan_at', value: scanTime });
+    if (settingsErr) {
+      console.error('[LAST SCAN] Failed to write to settings table:', settingsErr.message, settingsErr.code);
+    } else {
+      console.log('[LAST SCAN] Saved to settings table:', scanTime);
+    }
 
     return NextResponse.json({
       success:         true,
