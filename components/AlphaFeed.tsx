@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { supabase, Project } from '@/lib/supabase';
 import ProjectCard from './ProjectCard';
 import ProjectModal from './ProjectModal';
@@ -328,7 +329,10 @@ export default function AlphaFeed() {
             </span>
           </div>
           <p className="text-[11px] text-[#475569] leading-relaxed">
-            AlphaScan is for informational purposes only. Nothing here is financial advice. Always do your own research (DYOR). We are not responsible for any financial decisions made based on this data.
+            AlphaScan is for informational purposes only. Nothing here is financial advice. Always do your own research (DYOR). We are not responsible for any financial decisions made based on this data.{' '}
+            <Link href="/terms" className="underline hover:text-[#94a3b8] transition-colors">
+              Terms of Service
+            </Link>
           </p>
         </div>
       </footer>
