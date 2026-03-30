@@ -10,7 +10,8 @@
       "Bash(ls:*)",
       "Bash(xargs grep:*)",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(grep -n 'text-\\\\[#[0-9a-fA-F]\\\\{3,6\\\\}\\\\]' components/AlphaFeed.tsx components/ProjectModal.tsx)"
+      "Bash(grep -n 'text-\\\\[#[0-9a-fA-F]\\\\{3,6\\\\}\\\\]' components/AlphaFeed.tsx components/ProjectModal.tsx)",
+      "Bash(vercel:*)"
     ]
   }
 }

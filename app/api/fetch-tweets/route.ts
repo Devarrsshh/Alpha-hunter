@@ -235,6 +235,90 @@ async function fetchBuzzInBatches(
 }
 
 // ─────────────────────────────────────────────
+// Claude call with JSON recovery + batch retry
+// ─────────────────────────────────────────────
+
+// Walk the text character-by-character and pull out every complete {...} object.
+// Used when the array is truncated mid-stream.
+function recoverPartialJson(text: string): AlphaProject[] {
+  const objects: AlphaProject[] = [];
+  let depth = 0;
+  let start = -1;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        try {
+          const obj = JSON.parse(text.slice(start, i + 1));
+          if (obj && typeof obj.project_name === 'string') objects.push(obj as AlphaProject);
+        } catch { /* skip malformed fragment */ }
+        start = -1;
+      }
+    }
+  }
+
+  return objects;
+}
+
+async function callClaude(
+  anthropic: InstanceType<typeof Anthropic>,
+  tweets: string[],
+  depth = 0
+): Promise<AlphaProject[]> {
+  const message = await anthropic.messages.create({
+    model:      'claude-haiku-4-5',
+    max_tokens: 8192,
+    system:     CLAUDE_SYSTEM_PROMPT,
+    messages: [{
+      role:    'user',
+      content: `Here are ${tweets.length} recent tweets from crypto alpha hunters. Extract all alpha signals:\n\n${tweets.join('\n\n')}`,
+    }],
+  });
+
+  const rawContent = message.content[0];
+  if (rawContent.type !== 'text') return [];
+
+  const jsonText = rawContent.text
+    .replace(/^```(?:json)?\n?/i, '')
+    .replace(/\n?```$/i, '')
+    .trim();
+
+  // Happy path: valid JSON
+  try {
+    const parsed = JSON.parse(jsonText);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    console.warn(`[claude] JSON parse failed (depth ${depth}), finish_reason: ${message.stop_reason}`);
+  }
+
+  // Recovery 1: extract complete objects from truncated array
+  const recovered = recoverPartialJson(jsonText);
+  if (recovered.length > 0) {
+    console.log(`[claude] Partial recovery: salvaged ${recovered.length} projects`);
+    return recovered;
+  }
+
+  // Recovery 2: split into two smaller batches and retry (max 1 level deep)
+  if (depth === 0 && tweets.length > 50) {
+    console.log(`[claude] Retrying with two half-batches (${tweets.length} → ${Math.floor(tweets.length / 2)} each)`);
+    const mid = Math.floor(tweets.length / 2);
+    const [a, b] = await Promise.all([
+      callClaude(anthropic, tweets.slice(0, mid), 1),
+      callClaude(anthropic, tweets.slice(mid),    1),
+    ]);
+    return [...a, ...b];
+  }
+
+  console.error('[claude] All recovery attempts exhausted, returning empty');
+  return [];
+}
+
+// ─────────────────────────────────────────────
 // Part 2: Claude system prompt with new fields
 // ─────────────────────────────────────────────
 
@@ -517,41 +601,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No tweets fetched', perUser }, { status: 502 });
     }
 
-    // Step 2: single Claude call with all tweets
+    // Step 2: Claude extraction with JSON recovery + batch-retry fallback
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-    const message = await anthropic.messages.create({
-      model:      'claude-haiku-4-5',
-      max_tokens: 4096,
-      system:     CLAUDE_SYSTEM_PROMPT,
-      messages: [{
-        role:    'user',
-        content: `Here are ${allTweets.length} recent tweets from crypto alpha hunters. Extract all alpha signals:\n\n${allTweets.join('\n\n')}`,
-      }],
-    });
-
-    const rawContent = message.content[0];
-    if (rawContent.type !== 'text') {
-      return NextResponse.json({ error: 'Unexpected Claude response type' }, { status: 500 });
-    }
-
-    // Strip markdown fences if Claude adds them despite instructions
-    const jsonText = rawContent.text
-      .replace(/^```(?:json)?\n?/i, '')
-      .replace(/\n?```$/i, '')
-      .trim();
-
-    let projects: AlphaProject[] = [];
-    try {
-      const parsed = JSON.parse(jsonText);
-      projects = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      console.error('Failed to parse Claude JSON:', jsonText.slice(0, 500));
-      return NextResponse.json(
-        { error: 'Claude returned invalid JSON', raw: jsonText.slice(0, 500) },
-        { status: 500 }
-      );
-    }
+    const projects  = await callClaude(anthropic, allTweets);
+    console.log(`[claude] Extracted ${projects.length} projects from ${allTweets.length} tweets`);
 
     // Step 3: buzz verification — search Twitter for each extracted project
     const buzzMap = await fetchBuzzInBatches(projects.map((p) => p.project_name));
