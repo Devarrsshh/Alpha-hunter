@@ -640,13 +640,12 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success:         true,
-      cleaned_up:      cleanup.deleted,
-      tweets_fetched:  totalFetched,
-      projects_found:  projects.length,
-      per_user:        perUser,
+      success:        true,
+      cleaned_up:     cleanup.deleted,
+      tweets_fetched: totalFetched,
+      projects_found: projects.length,
+      per_user:       perUser,
       projects,
-      usage:           message.usage,
     });
   } catch (err) {
     console.error('fetch-tweets error:', err);
