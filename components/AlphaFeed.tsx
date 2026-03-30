@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase, Project } from '@/lib/supabase';
 import ProjectCard from './ProjectCard';
@@ -15,117 +15,27 @@ const TYPE_FILTERS = [
   { key: 'other',     label: 'OTHER' },
 ];
 
-const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
-
-function formatRelative(date: Date): string {
-  const diff  = Date.now() - date.getTime();
-  const mins  = Math.floor(diff / 60_000);
-  const hours = Math.floor(diff / 3_600_000);
-  if (mins < 1)   return 'just now';
-  if (mins < 60)  return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
-function formatCooldown(ms: number): string {
-  const totalMins = Math.ceil(ms / 60_000);
-  const h = Math.floor(totalMins / 60);
-  const m = totalMins % 60;
-  if (h > 0 && m > 0) return `${h}h ${m}m`;
-  if (h > 0) return `${h}h`;
-  return `${m}m`;
-}
-
 export default function AlphaFeed() {
   const [projects,        setProjects]        = useState<Project[]>([]);
   const [loading,         setLoading]         = useState(true);
-  const [refreshing,      setRefreshing]      = useState(false);
-  const [autoScanning,    setAutoScanning]    = useState(false);
   const [filterType,      setFilterType]      = useState('all');
   const [search,          setSearch]          = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [lastScan,        setLastScan]        = useState<Date | null>(null);
-  const [, setTick] = useState(0);
-  const autoScanTriggered = useRef(false);
 
-  // Re-render every minute to keep countdown accurate
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Fetch last scan time from DB (shared across all users)
-  const fetchLastScanTime = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('key', 'last_scan_at')
-      .maybeSingle();
-    if (error) {
-      console.error('[LAST SCAN] Failed to read from settings table:', error.message, error.code);
-      return;
-    }
-    if (data?.value) {
-      const parsed = new Date(data.value);
-      console.log('[LAST SCAN] Loaded from DB:', data.value);
-      setLastScan(parsed);
-    } else {
-      console.log('[LAST SCAN] No last_scan_at row found in settings table yet.');
-    }
-  }, []);
-
-  const fetchProjects = useCallback(async (): Promise<Project[]> => {
+  const fetchProjects = useCallback(async () => {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .order('hype_level',    { ascending: false, nullsFirst: false })
       .order('mention_count', { ascending: false })
       .order('first_spotted', { ascending: false });
-    if (!error && data) {
-      setProjects(data as Project[]);
-      return data as Project[];
-    }
-    return [];
+    if (!error && data) setProjects(data as Project[]);
+    setLoading(false);
   }, []);
 
-  const handleScan = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      const res  = await fetch('/api/fetch-tweets');
-      const json = await res.json();
-      if (json.success) {
-        const now = new Date();
-        setLastScan(now);
-        await fetchProjects();
-      } else {
-        console.error('Scan error:', json.error);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setRefreshing(false);
-      setAutoScanning(false);
-    }
-  }, [fetchProjects]);
-
   useEffect(() => {
-    (async () => {
-      await fetchLastScanTime();
-      const data = await fetchProjects();
-      setLoading(false);
-      if (data.length === 0 && !autoScanTriggered.current) {
-        autoScanTriggered.current = true;
-        setAutoScanning(true);
-        await handleScan();
-      }
-    })();
-  }, [fetchLastScanTime, fetchProjects, handleScan]);
-
-  // Cooldown
-  const cooldownRemaining = lastScan
-    ? Math.max(0, COOLDOWN_MS - (Date.now() - lastScan.getTime()))
-    : 0;
-  const isCoolingDown = cooldownRemaining > 0;
+    fetchProjects();
+  }, [fetchProjects]);
 
   const filtered = projects.filter((p) => {
     if ((p.hype_level ?? 0) <= 3) return false;
@@ -169,29 +79,6 @@ export default function AlphaFeed() {
               </div>
             </div>
 
-            {/* Run Scan */}
-            <button
-              onClick={handleScan}
-              disabled={refreshing || isCoolingDown}
-              className="flex items-center gap-2 px-3 py-1.5 font-mono text-xs tracking-widest border border-[#2a2a2a] text-slate-400 hover:border-[#6366f1]/60 hover:text-[#6366f1] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              {refreshing ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] animate-pulse" />
-                  SCANNING...
-                </>
-              ) : isCoolingDown ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full border border-current" />
-                  NEXT SCAN IN {formatCooldown(cooldownRemaining)}
-                </>
-              ) : (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full border border-current" />
-                  RUN SCAN
-                </>
-              )}
-            </button>
           </div>
         </div>
       </header>
@@ -266,16 +153,11 @@ export default function AlphaFeed() {
         </div>
 
         {/* ── Feed ── */}
-        {loading || autoScanning ? (
+        {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3">
             <div className="font-mono text-sm text-[#6366f1] tracking-widest">
-              {autoScanning ? '> FETCHING ALPHA FROM 33 HUNTERS...' : '> LOADING SIGNALS...'}
+              &gt; LOADING SIGNALS...
             </div>
-            {autoScanning && (
-              <div className="font-mono text-xs text-[#94a3b8] tracking-wider">
-                SCANNING TWITTER · EXTRACTING WITH AI · EST. 30s
-              </div>
-            )}
             <div className="flex gap-1 mt-2">
               {[0,1,2,3,4].map((i) => (
                 <div
@@ -304,16 +186,6 @@ export default function AlphaFeed() {
           </div>
         )}
 
-        {/* ── Scanning toast ── */}
-        {refreshing && !autoScanning && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-[#111] border border-[#6366f1]/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] animate-pulse shrink-0" />
-            <div>
-              <div className="font-mono text-xs text-white tracking-widest">SCANNING HUNTERS...</div>
-              <div className="font-mono text-[10px] text-[#94a3b8] mt-0.5">FETCHING · EXTRACTING · UPSERTING</div>
-            </div>
-          </div>
-        )}
       </main>
 
       {selectedProject && (
