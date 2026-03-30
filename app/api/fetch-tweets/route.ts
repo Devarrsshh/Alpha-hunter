@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { jsonrepair } from 'jsonrepair';
 import { supabase } from '@/lib/supabase';
 
 // ─────────────────────────────────────────────
@@ -293,17 +294,28 @@ async function callClaude(
     const parsed = JSON.parse(jsonText);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
-    console.warn(`[claude] JSON parse failed (depth ${depth}), finish_reason: ${message.stop_reason}`);
+    console.warn(`[claude] JSON parse failed (depth ${depth}), stop_reason: ${message.stop_reason}`);
   }
 
-  // Recovery 1: extract complete objects from truncated array
+  // Recovery 1: jsonrepair — closes open brackets/braces, fixes truncated values like `"is_shill": f`
+  try {
+    const repaired = jsonrepair(jsonText);
+    const parsed   = JSON.parse(repaired);
+    const result   = Array.isArray(parsed) ? parsed : [];
+    console.log(`[claude] jsonrepair recovered ${result.length} projects`);
+    return result;
+  } catch {
+    console.warn('[claude] jsonrepair could not fix the response');
+  }
+
+  // Recovery 2: brute-force extract complete {...} objects from truncated text
   const recovered = recoverPartialJson(jsonText);
   if (recovered.length > 0) {
     console.log(`[claude] Partial recovery: salvaged ${recovered.length} projects`);
     return recovered;
   }
 
-  // Recovery 2: split into two smaller batches and retry (max 1 level deep)
+  // Recovery 3: split into two smaller batches and retry (max 1 level deep)
   if (depth === 0 && tweets.length > 50) {
     console.log(`[claude] Retrying with two half-batches (${tweets.length} → ${Math.floor(tweets.length / 2)} each)`);
     const mid = Math.floor(tweets.length / 2);
